@@ -23,13 +23,14 @@ namespace GameService.Models
         public LinkedListNode<GamePlayer> CurrentActionOn { get; private set; }
         public GamePlayer LastAgressor { get; private set; }
         public LinkedListNode<GamePlayer> DealerButtonOn { get; private set; }
-
         public TableConfiguration TableConfig { get; private set; }
         public uint CurrentPotSize { get; private set; }
         private void AddBetToPot(uint bet) => CurrentPotSize += bet;
         public List<Card> Board { get; set; }
         private CardDeck CardDeck { get; set; }
+
         private readonly HandStateMachine HandState;
+
         private CancellationTokenSource PlayerTimerCancellationTokenSource;
 
         public Game(IHubContext<PokerHub> hubContext, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
@@ -42,7 +43,7 @@ namespace GameService.Models
             HandState = new HandStateMachine();
         }
 
-        public Game(IHubContext<PokerHub> hubContext) => new Game(hubContext, new TableConfiguration());
+        public Game(IHubContext<PokerHub> hubContext) : this(hubContext, new TableConfiguration()) { }
 
         #region PlayerActions
 
