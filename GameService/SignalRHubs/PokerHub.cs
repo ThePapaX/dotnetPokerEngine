@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace GameService.Hubs
 {
-    public class PokerHub : Hub
+    public class PokerHub : Hub, IPokerHubClient
     {
         private IGame _game;
 
@@ -24,12 +24,7 @@ namespace GameService.Hubs
         {
             // Do the action
             await _game.ProcessClientAction(playerAction);
-            
-        }
 
-        public async Task PlayerWentInactive(int playerId)
-        {
-            throw new NotImplementedException();
         }
 
         public override async Task OnConnectedAsync()
@@ -52,7 +47,6 @@ namespace GameService.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            //await Groups.RemoveFromGroupAsync(Context.ConnectionId, "SignalR Users");
             if (exception == null)
             {
                 await _game.RemovePlayer(Context.ConnectionId);
