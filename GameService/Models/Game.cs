@@ -64,6 +64,7 @@ namespace GameService.Models
 
         public async Task ProcessClientAction(PlayerEvent playerAction)
         {
+            //TODO: validate that the player can perform the given action. E.G Can't check and Can't call if someone has raised. 
             switch (playerAction.EventType)
             {
                 case PlayerActionType.PostSmallBlind:
@@ -205,7 +206,7 @@ namespace GameService.Models
 
             var canDeal = UpdateNextActionOn();
 
-            while (canDeal)
+            while (canDeal || HandState.GetCurrentStateValue() != Models.HandState.ShowDown)
             {
                 await Deal();
                 await RunActionLoop();
@@ -279,7 +280,6 @@ namespace GameService.Models
             await CollectBigBlind();
             UpdateNextActionOn();
 
-            //Deal Cards
             await Deal();
         }
 
@@ -298,8 +298,8 @@ namespace GameService.Models
                 EventType = GameActionType.CollectSmallBlind,
                 Data = new
                 {
-                    size = TableConfig.SmallBlindSize,
-                    playerID = CurrentActionOn.Value.Id
+                    Size = TableConfig.SmallBlindSize,
+                    PlayerID = CurrentActionOn.Value.Id
                 }
             };
 
@@ -313,8 +313,8 @@ namespace GameService.Models
                 EventType = GameActionType.CollectBigBlind,
                 Data = new
                 {
-                    size = TableConfig.BigBlindSize,
-                    playerID = CurrentActionOn.Value.Id
+                    Size = TableConfig.BigBlindSize,
+                    PlayerID = CurrentActionOn.Value.Id
                 }
             };
             await DispatchGameEvent(bigBlindEvent);
@@ -323,6 +323,14 @@ namespace GameService.Models
         public async Task DispatchGameEvent(GameEvent gameEventData)
         {
             await _hubContext.Clients.All.SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+        }
+
+        public async Task DispatchPlayerCard(GameEvent gameEventData)
+        {
+            await _hubContext.Clients.User(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+
+            gameEventData.Data.Card = new Card();
+            await _hubContext.Clients.AllExcept(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
         }
 
         public async Task DispatchPlayerAction(PlayerEvent playerAction)
@@ -335,30 +343,28 @@ namespace GameService.Models
             switch (HandState.GetCurrentStateValue())
             {
                 case Models.HandState.Preflop:
-                    var nextPlayer = DealerButtonOn.Next;
+                    var currentPlayer = DealerButtonOn.Next;
                     var cardDealtPerPlayerCount = 1;
 
-                    while (!(nextPlayer == DealerButtonOn && cardDealtPerPlayerCount == 2))
+                    while (!(currentPlayer == DealerButtonOn && cardDealtPerPlayerCount == 2))
                     {
-                        if (nextPlayer == DealerButtonOn) cardDealtPerPlayerCount++;
+                        if (currentPlayer == DealerButtonOn) cardDealtPerPlayerCount++;
+                        
+                        var playerCard = CardDeck.GetNextCard();
 
-                        var standardMaskedCardEvent = new GameEvent()
+                        var dealCardEvent = new GameEvent()
                         {
                             EventType = GameActionType.DealCard,
-                            Data = new { PlayerId = nextPlayer.Value.Id }
+                            Data = new { 
+                                PlayerId = currentPlayer.Value.Id, 
+                                Card = playerCard
+                            }
                         };
 
-                        var playerCard = CardDeck.GetNextCard();
-                        var encryptedPlayerCard = new GameEvent()
-                        {
-                            EventType = GameActionType.DealEncryptedCard,
-                            Data = playerCard
-                        };
+                        await DispatchPlayerCard(dealCardEvent);
+                        
 
-                        await DispatchGameEvent(encryptedPlayerCard);
-                        await DispatchGameEvent(standardMaskedCardEvent);
-
-                        nextPlayer = nextPlayer.Next;
+                        currentPlayer = currentPlayer.Next;
                     }
 
                     break;
@@ -366,6 +372,8 @@ namespace GameService.Models
                 case Models.HandState.Flop:
                     _ = CardDeck.GetNextCard();
                     List<Card> cardsToDeal = CardDeck.GetNextCards(3);
+                    
+                    Board.AddRange(cardsToDeal);
 
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealFlop, Data = cardsToDeal });
 
@@ -374,6 +382,7 @@ namespace GameService.Models
                 case Models.HandState.Turn:
                     _ = CardDeck.GetNextCard();
                     var turnCard = CardDeck.GetNextCard();
+                    Board.Add(turnCard);
 
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealTurn, Data = turnCard });
 
@@ -382,6 +391,7 @@ namespace GameService.Models
                 case Models.HandState.River:
                     _ = CardDeck.GetNextCard();
                     var riverCard = CardDeck.GetNextCard();
+                    Board.Add(riverCard);
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealTurn, Data = riverCard });
 
                     break;

@@ -10,7 +10,8 @@ namespace GameService.Models
         Preflop,
         Flop,
         Turn,
-        River
+        River, 
+        ShowDown
     }
     public class HandStateMachine
     {
@@ -38,6 +39,7 @@ namespace GameService.Models
             State.AddLast(HandState.Flop);
             State.AddLast(HandState.Turn);
             State.AddLast(HandState.River);
+            State.AddLast(HandState.ShowDown);
             
             CurrentState = State.First;
         }

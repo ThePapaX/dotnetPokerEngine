@@ -11,7 +11,7 @@ namespace GameService.Models
         public CardRank Rank { get; }
         public Card()
         {
-
+            Rank = 0;
         }
         public Card(CardRank rank, CardSuit suit)
         {
