@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\CMakeFiles\62951a178b86814443c25c86f2e67edd\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{98CC9310-0EF2-3FEF-A978-B3BA413AF4D9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
