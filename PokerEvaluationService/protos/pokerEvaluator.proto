@@ -34,5 +34,28 @@ message EvaluationRequest {
 
 // The response result 
 message EvaluationResult {
-  string result = 1;
+  message PlayerEvaluationResult{
+    enum HandType {
+        NoPair = 0;
+        OnePair = 1;
+        TwoPair = 2;
+        Trips = 3;
+        Straight = 4;
+        Flush = 5;
+        FullHouse = 6;
+        Quads = 7;
+        StraightFlush = 8;
+    }
+    HandType handType = 1;
+    double equityValue = 2;
+    double winProbability = 3;
+    /* 
+    * cardOrder is the ordered player hand resulting from the evaluation from Hi to Lo.
+    * The values are not cards.
+    * If the result is two pairs, and example is (3 2 K), translate to pair of 3, pair of 2, and K high.
+    * For 5 card results, for example Straight, will contain just the highest card. Eg (6), straight to the six.
+    */
+    repeated int32 cardOrder = 4; 
+  }
+  repeated PlayerEvaluationResult results = 1;
 }
