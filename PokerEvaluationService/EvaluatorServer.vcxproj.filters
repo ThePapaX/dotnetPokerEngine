@@ -25,4 +25,7 @@
       <UniqueIdentifier>{CE8D1B1E-477F-35FC-BBA1-A3F7B552E623}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="protos\pokerEvaluator.proto" />
+  </ItemGroup>
 </Project>

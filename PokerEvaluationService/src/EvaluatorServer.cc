@@ -32,13 +32,30 @@ using grpc::Status;
 using pokerEvaluator::EvaluationRequest;
 using pokerEvaluator::EvaluationResult;
 using pokerEvaluator::Evaluator;
+using pokerEvaluator::EvaluationResult_PlayerEvaluationResult_HandType;
 
 // Logic and data behind the server's behavior.
 class PokerEvaluatorServiceImpl final : public Evaluator::Service {
   Status Evaluate(ServerContext* context, const EvaluationRequest* request,
                   EvaluationResult* result) override {
-    std::string prefix("Hello ");
-    result->set_result(prefix + request->command());
+      
+      std::cout << "Got result" << std::endl;
+    
+      pokerEvaluator::EvaluationResult_PlayerEvaluationResult *result1 = result->add_results();
+      result1->add_cardorder(3);
+      result1->add_cardorder(2);
+     
+      result1 ->set_equityvalue(1);
+      result1 ->set_winprobability(.333);
+      result1 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_FullHouse);
+
+      pokerEvaluator::EvaluationResult_PlayerEvaluationResult* result2 = result->add_results();
+      result2 ->add_cardorder(11);
+      result2 ->add_cardorder(2);
+      result2 ->set_equityvalue(0);
+      result2 ->set_winprobability(0);
+      result2 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_NoPair);
+       
     return Status::OK;
   }
 };
