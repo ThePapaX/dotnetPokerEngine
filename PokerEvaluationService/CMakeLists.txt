@@ -19,7 +19,19 @@
 
 cmake_minimum_required(VERSION 3.5.1)
 
+message(STATUS "ENV CHECK $ENV{VCPKG_ROOT} $ENV{NVM_HOME} ${CMAKE_TOOLCHAIN_FILE}")
+
+#if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+if(DEFINED ENV{VCPKG_ROOT})
+  message(STATUS "Using CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+  set(CMAKE_TOOLCHAIN_FILE "C:/projects/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
+endif()
+
+
 project(PokerEvaluator C CXX)
+
+set(CMAKE_GENERATOR_PLATFORM x64)
 
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -98,7 +110,7 @@ else()
   # Find Protobuf installation
   # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
   set(protobuf_MODULE_COMPATIBLE TRUE)
-  find_package(Protobuf CONFIG REQUIRED)
+  find_package(protobuf CONFIG REQUIRED)
   message(STATUS "Using protobuf ${protobuf_VERSION}")
 
   set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
@@ -147,7 +159,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 foreach(_target
   EvaluatorServer
   EvaluatorAsyncServer)
-  add_executable(${_target} "${_target}.cc"
+  add_executable(${_target} "src/${_target}.cc"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
   target_link_libraries(${_target}

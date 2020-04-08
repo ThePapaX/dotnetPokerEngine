@@ -23,7 +23,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include "pokerEvaluator.grpc.pb.h"
-#endif
+
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -34,8 +34,8 @@ using pokerEvaluator::EvaluationResult;
 using pokerEvaluator::Evaluator;
 
 // Logic and data behind the server's behavior.
-class PokerEvaluatorServiceImpl final : public Greeter::Service {
-  Status SayHello(ServerContext* context, const EvaluationRequest* request,
+class PokerEvaluatorServiceImpl final : public Evaluator::Service {
+  Status Evaluate(ServerContext* context, const EvaluationRequest* request,
                   EvaluationResult* result) override {
     std::string prefix("Hello ");
     result->set_result(prefix + request->command());

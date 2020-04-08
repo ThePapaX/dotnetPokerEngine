@@ -24,7 +24,7 @@ package pokerEvaluator;
 // The service definition.
 service Evaluator {
   // Sends a greeting
-  rpc Evaluate (EvalationRequest) returns (EvaluationResult) {}
+  rpc Evaluate (EvaluationRequest) returns (EvaluationResult) {}
 }
 
 // The request message containing command to evaluate

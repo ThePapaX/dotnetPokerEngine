@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\src\EvaluatorServer.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\pokerEvaluator.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\pokerEvaluator.grpc.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\CMakeFiles\c439fda0c3fdf4996b41a5d9bb2d64c3\pokerEvaluator.pb.cc.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{98CC9310-0EF2-3FEF-A978-B3BA413AF4D9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{CE8D1B1E-477F-35FC-BBA1-A3F7B552E623}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
