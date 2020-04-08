@@ -1,0 +1,69 @@
+# Copyright 2019 The gRPC Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM debian:buster
+
+RUN apt-get update && apt-get install -y \
+  build-essential autoconf  libtool git pkg-config \
+  automake libtool curl wget g++ unzip libssl-dev zlib1g-dev \
+  && apt-get clean
+
+# install protobuf first, then grpc
+ENV GRPC_RELEASE_TAG v1.28.1
+ENV CMAKE_VERSION = 3.17
+ENV CMAKE_BUILD=0
+ENV TEMP_BASE_DIR /var/local/git
+ENV INSTALL_COMMAND = cmake CMakeLists.txt && make && make install
+RUN mkdir -p ${TEMP_BASE_DIR} && cd ${TEMP_BASE_DIR}
+
+RUN echo "--- installing CMAKE ${TEMP_BASE_DIR} ---" && \
+    wget https://cmake.org/files/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.${CMAKE_BUILD}.tar.gz && \
+    tar -xzvf cmake-${CMAKE_VERSION}.${CMAKE_BUILD}.tar.gz && \
+    cd cmake-${CMAKE_VERSION}}.${CMAKE_BUILD}} &&\
+    ./bootstrap && \
+    make && make install && \
+    ln -s /usr/local/bin/cmake /usr/bin/cmake
+
+RUN git clone -b ${GRPC_RELEASE_TAG} https://github.com/grpc/grpc ${TEMP_BASE_DIR}/grpc && \
+    cd ${TEMP_BASE_DIR}/grpc && \
+    git submodule update --init --recursive && \
+    echo "--- installing protobuf ---" && \
+    cd third_party/protobuf/cmake && \
+    ${INSTALL_COMMAND}
+    
+#install package dependencies manually
+#TODO: Change it to use the files in third_party/abseil-cpp/absl/
+RUN git clone -b 20200225.1 https://github.com/abseil/abseil-cpp ${TEMP_BASE_DIR}/abseil-cpp && \
+    cd ${TEMP_BASE_DIR}/abseil-cpp && \ 
+    ${INSTALL_COMMAND}
+
+RUN git clone -b cares-1_16_0 https://github.com/c-ares/c-ares ${TEMP_BASE_DIR}/c-ares && \
+    cd ${TEMP_BASE_DIR}/c-ares && \ 
+    ${INSTALL_COMMAND}
+
+
+RUN echo "--- installing gRpc ---" && \
+    mkdir -p ${TEMP_BASE_DIR}/cmake/build && \
+    cd ${TEMP_BASE_DIR}/cmake/build && \
+    cmake ../.. -DgRPC_INSTALL=ON               \
+              -DgRPC_BUILD_TESTS=OFF            \
+              -DCMAKE_BUILD_TYPE=Release        \
+              -DgRPC_ABSL_PROVIDER=package      \
+              -DgRPC_CARES_PROVIDER=package     \
+              -DgRPC_PROTOBUF_PROVIDER=package  \
+              -DgRPC_SSL_PROVIDER=package       \
+              -DgRPC_ZLIB_PROVIDER=package      \
+              -DgRPC_BUILD_CSHARP_EXT=OFF
+RUN make && make install
+    #rm -rf ${TEMP_BASE_DIR}
