@@ -10,10 +10,10 @@
     <ClCompile Include="src\EvaluatorServer.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\pokenum.cc">
+    <ClCompile Include="src\pokenum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PokerEvaluator.cc">
+    <ClCompile Include="src\PokerEvaluator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

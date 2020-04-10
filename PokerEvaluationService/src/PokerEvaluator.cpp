@@ -36,6 +36,8 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 {
 	EvaluationResult evaluationResult;
 	enum_result_t enumerationResult;
+	StdDeck_CardMask *playerCards = new StdDeck_CardMask [ENUM_MAXPLAYERS];
+	StdDeck_CardMask boardCards;
 
 	// TODO: agregate results from each hand evaluation.
 
@@ -48,11 +50,13 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 	// HandVal_TOP_CARD(handval); HandVal_SECOND_CARD(handval); HandVal_THIRD_CARD(handval) .. etc.
 	// StdDeck_rankChars[HandVal_TOP_CARD(handval)]); -> this wil give us the rank as a char : { '2', 'K', 'Q'... etc } 
 	
-	int isError = pokenum(paramsCount, parsedParams, &enumerationResult);
+
+	int isError = pokenum(paramsCount, parsedParams, &enumerationResult, &boardCards, &playerCards);
 	std::cout << std::endl;
 
 	for (int i = 0; i < enumerationResult.nplayers; i++){
 		pokerEvaluator::EvaluationResult_PlayerEvaluationResult* playerEvalresult = evaluationResult.add_results();
+		//HandVal playerHandValue = Hand_EVAL_N
 
 		playerEvalresult->add_cardorder(3);
 		playerEvalresult->add_cardorder(2);
@@ -61,8 +65,6 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 		playerEvalresult->set_winprobability(100 * enumerationResult.nwinhi[i] / enumerationResult.nsamples);
 
 		playerEvalresult->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_FullHouse);
-
-		printf(" %8.6f", enumerationResult.ev[i] / enumerationResult.nsamples);
 		
 	}
 	std::cout << std::endl;

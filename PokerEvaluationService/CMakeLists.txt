@@ -155,6 +155,7 @@ add_custom_command(
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
+
 # Targets Evaluator[Async]Server)
 foreach(_target
   EvaluatorServer
@@ -162,6 +163,7 @@ foreach(_target
   add_executable(${_target} "src/${_target}.cc"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
+    target_include_directories(${_target} PUBLIC include)
   target_link_libraries(${_target}
     ${_GRPC_GRPCPP_UNSECURE}
     ${_PROTOBUF_LIBPROTOBUF})
