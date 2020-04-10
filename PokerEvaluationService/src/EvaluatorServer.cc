@@ -24,7 +24,7 @@
 
 #include "pokerEvaluator.grpc.pb.h"
 #include <include\enumdefs.h>
-#include <include\PokerEvaluator.h>
+#include "include/PokerEvaluator.h"
 
 
 using grpc::Server;
@@ -41,16 +41,14 @@ class PokerEvaluatorServiceImpl final : public Evaluator::Service {
   Status Evaluate(ServerContext* context, const EvaluationRequest* request,
                   EvaluationResult* result) override {
       PokerEvaluator Evaluator;
-      enum_result_t evaluationResult;
-      //enumResultClear(&result);
 
       int argsCount = 0;
       char** parsedArgs = Evaluator.makeargs(request-> command(), &argsCount);
 
-      int isError = Evaluator.Evaluate(argsCount, parsedArgs, &evaluationResult);
+      *result = Evaluator.Evaluate(argsCount, parsedArgs);
 
       std::cout << "Got result" << std::endl;
-    
+    /*
       pokerEvaluator::EvaluationResult_PlayerEvaluationResult *result1 = result->add_results();
       result1->add_cardorder(3);
       result1->add_cardorder(2);
@@ -64,7 +62,7 @@ class PokerEvaluatorServiceImpl final : public Evaluator::Service {
       result2 ->add_cardorder(2);
       result2 ->set_equityvalue(0);
       result2 ->set_winprobability(0);
-      result2 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_NoPair);
+      result2 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_NoPair);*/
        
     return Status::OK;
   }

@@ -425,11 +425,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\src\EvaluatorServer.cc" />
+    <ClCompile Include="src\EvaluatorServer.cc" />
     <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\pokerEvaluator.pb.cc" />
     <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\pokerEvaluator.grpc.pb.cc" />
-    <ClCompile Include="src\pokenum.cpp" />
-    <ClCompile Include="src\PokerEvaluator.cpp" />
+    <ClCompile Include="src\pokenum.cc" />
+    <ClCompile Include="src\PokerEvaluator.cc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\ZERO_CHECK.vcxproj">

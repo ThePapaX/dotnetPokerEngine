@@ -248,6 +248,19 @@ int pokenum(int argc, char** argv, enum_result_t* result)
 	printf("\n--------Details--------\n");
 	enumResultPrint(result, pockets, board);
 
+	// Terse simple loop
+	/*for (int i = 0; i < result->nplayers; i++)
+		printf(" %8.6f", result->ev[i] / result->nsamples);*/
+
+	//Detailed loop
+	int width = 4;
+	/*for (int i = 0; i < result->nplayers; i++) {
+		printf("%*s %7d   %7d %7d %7d   %7d %7d %7d   %5.3f\n",
+			-width, DmaskString(StdDeck, pockets[i]), result->nscoop[i],
+			result->nwinhi[i], result->nlosehi[i], result->ntiehi[i],
+			result->nwinlo[i], result->nloselo[i], result->ntielo[i],
+			result->ev[i] / result->nsamples);*/
+
 	return err;
 }
 
