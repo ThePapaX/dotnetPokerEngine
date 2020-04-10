@@ -25,7 +25,6 @@
 #include <grpc/support/log.h>
 
 #include "pokerEvaluator.grpc.pb.h"
-#endif
 
 using grpc::Server;
 using grpc::ServerAsyncResponseWriter;
@@ -99,7 +98,7 @@ class ServerImpl final {
 
         // The actual processing.
         std::string prefix("Hello ");
-        reply_.set_message(prefix + request_.result());
+        reply_.set_result(prefix + request_.command());
 
         // And we are done! Let the gRPC runtime know we've finished, using the
         // memory address of this instance as the uniquely identifying tag for

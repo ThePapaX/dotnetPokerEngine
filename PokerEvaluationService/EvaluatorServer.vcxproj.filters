@@ -10,6 +10,12 @@
     <ClCompile Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\pokerEvaluator.grpc.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\pokenum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PokerEvaluator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\armando.lozada\source\repos\NetCorePoker\PokerEvaluationService\CMakeFiles\c439fda0c3fdf4996b41a5d9bb2d64c3\pokerEvaluator.pb.cc.rule">
@@ -24,8 +30,60 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{CE8D1B1E-477F-35FC-BBA1-A3F7B552E623}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{8e8b2d4e-4840-4894-a798-619675cb7247}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libs">
+      <UniqueIdentifier>{1ddf7b83-514b-4c1e-bef8-3c2181b72d89}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="protos\pokerEvaluator.proto" />
+    <Library Include="libs\poker-eval.lib">
+      <Filter>Libs</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\deck_std.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\enumdefs.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\handval.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pokenum.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rules_std.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\enumord.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pokereval_export.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\deck.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\poker_defs.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\enumerate.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\game_std.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\handval_low.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\combinations.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PokerEvaluator.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
