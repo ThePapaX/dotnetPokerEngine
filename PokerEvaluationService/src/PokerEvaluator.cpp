@@ -58,16 +58,6 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 	StdDeck_CardMask boardCards;
 	int boardCardCount = 0;
 
-	/** 
-	* StdDeck_StdRules_EVAL_TYPE : gives the type of hand from the 
-	* We need to get for each player its: HandVal handval
-	* With that we can get the handtype as : HandVal_HANDTYPE(handval), which returns and integer that we can map.
-	* StdRules_handTypeNames[htype] , will give us a string....
-	* StdRules_nSigCards[htype], will give us how many cards are used for that htype, a number from 1 to 5
-	* Then with that number we can programatically get the card Ranks with:
-	* HandVal_TOP_CARD(handval); HandVal_SECOND_CARD(handval); HandVal_THIRD_CARD(handval) .. etc. 
-	*/
-
 	int isError = pokenum(paramsCount, parsedParams, &enumerationResult, &boardCards, &playerCards, boardCardCount);
 
 	for (int i = 0; i < enumerationResult.nplayers; i++){

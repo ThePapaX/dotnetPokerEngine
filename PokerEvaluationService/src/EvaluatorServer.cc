@@ -1,21 +1,3 @@
-/*
- *
- * Copyright 2015 gRPC authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include <iostream>
 #include <memory>
 #include <string>
@@ -23,9 +5,10 @@
 #include <grpcpp/grpcpp.h>
 
 #include "pokerEvaluator.grpc.pb.h"
-#include <include\enumdefs.h>
-#include "include/PokerEvaluator.h"
+#include <include\PokerEvaluator.h>
+#include <chrono>
 
+using namespace std::chrono;
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -38,57 +21,48 @@ using pokerEvaluator::EvaluationResult_PlayerEvaluationResult_HandType;
 
 // Logic and data behind the server's behavior.
 class PokerEvaluatorServiceImpl final : public Evaluator::Service {
-  Status Evaluate(ServerContext* context, const EvaluationRequest* request,
-                  EvaluationResult* result) override {
-      PokerEvaluator Evaluator;
+	Status Evaluate(ServerContext* context, const EvaluationRequest* request,
+		EvaluationResult* result) override {
 
-      int argsCount = 0;
-      char** parsedArgs = Evaluator.makeargs(request-> command(), &argsCount);
+		auto start = high_resolution_clock::now();
 
-      *result = Evaluator.Evaluate(argsCount, parsedArgs);
+		PokerEvaluator Evaluator;
 
-      std::cout << "Got result" << std::endl;
-    /*
-      pokerEvaluator::EvaluationResult_PlayerEvaluationResult *result1 = result->add_results();
-      result1->add_cardorder(3);
-      result1->add_cardorder(2);
-     
-      result1 ->set_equityvalue(1);
-      result1 ->set_winprobability(.333);
-      result1 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_FullHouse);
+		int argsCount = 0;
+		char** parsedArgs = Evaluator.makeargs(request->command(), &argsCount);
 
-      pokerEvaluator::EvaluationResult_PlayerEvaluationResult* result2 = result->add_results();
-      result2 ->add_cardorder(11);
-      result2 ->add_cardorder(2);
-      result2 ->set_equityvalue(0);
-      result2 ->set_winprobability(0);
-      result2 ->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_NoPair);*/
-       
-    return Status::OK;
-  }
+		*result = Evaluator.Evaluate(argsCount, parsedArgs);
+
+		int duration = std::chrono::duration_cast<std::chrono::microseconds>(high_resolution_clock::now() - start).count();
+
+		std::cout << "Evaluation completed in: " << duration << " microseconds." << std::endl;
+
+
+		return Status::OK;
+	}
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50051");
-  PokerEvaluatorServiceImpl service;
+	std::string server_address("0.0.0.0:50051");
+	PokerEvaluatorServiceImpl service;
 
-  ServerBuilder builder;
-  // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  // Register "service" as the instance through which we'll communicate with
-  // clients. In this case it corresponds to an *synchronous* service.
-  builder.RegisterService(&service);
-  // Finally assemble the server.
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+	ServerBuilder builder;
+	// Listen on the given address without any authentication mechanism.
+	builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+	// Register "service" as the instance through which we'll communicate with
+	// clients. In this case it corresponds to an *synchronous* service.
+	builder.RegisterService(&service);
+	// Finally assemble the server.
+	std::unique_ptr<Server> server(builder.BuildAndStart());
+	std::cout << "Server listening on " << server_address << std::endl;
 
-  // Wait for the server to shutdown. Note that some other thread must be
-  // responsible for shutting down the server for this call to ever return.
-  server->Wait();
+	// Wait for the server to shutdown. Note that some other thread must be
+	// responsible for shutting down the server for this call to ever return.
+	server->Wait();
 }
 
 int main(int argc, char** argv) {
-  RunServer();
+	RunServer();
 
-  return 0;
+	return 0;
 }

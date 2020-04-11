@@ -28,8 +28,6 @@ int pokenum(int argc, char** argv, enum_result_t* result, StdDeck_CardMask *boar
 			err = 1; // ENUMERATION TYPE NOT SUPPORTED
 		}
 
-		printf("--------Terse Result--------\n");
-		enumResultPrintTerse(result, *pocketCards, *board);
 		printf("\n--------Details--------\n");
 		enumResultPrint(result, *pocketCards, *board);
 	}
