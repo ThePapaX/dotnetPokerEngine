@@ -32,30 +32,22 @@ char** PokerEvaluator::makeargs(std::string input, int* argumentCount)
 
 	return argumentVector;
 }
-static std::vector<int> getHandCards(int handType, HandVal handValue) {
-
-	std::vector<int> cards;
+static std::string getHandCardOrder(int handType, HandVal handValue) {
+	std::string cards;
+	cards.clear();
 
 	if (StdRules_nSigCards[handType] >= 1)
-		cards.push_back(HandVal_TOP_CARD(handValue));
+		cards += StdDeck_rankChars[HandVal_TOP_CARD(handValue)];
 	if (StdRules_nSigCards[handType] >= 2)
-		cards.push_back(HandVal_SECOND_CARD(handValue));
+		cards += StdDeck_rankChars[HandVal_SECOND_CARD(handValue)];
 	if (StdRules_nSigCards[handType] >= 3)
-		cards.push_back(HandVal_THIRD_CARD(handValue));
+		cards += StdDeck_rankChars[HandVal_THIRD_CARD(handValue)];
 	if (StdRules_nSigCards[handType] >= 4)
-		cards.push_back(HandVal_FOURTH_CARD(handValue));
+		cards += StdDeck_rankChars[HandVal_FOURTH_CARD(handValue)];
 	if (StdRules_nSigCards[handType] >= 5)
-		cards.push_back(HandVal_FIFTH_CARD(handValue));
+		cards += StdDeck_rankChars[HandVal_FIFTH_CARD(handValue)];
 
 	return cards;
-}
-
-static void PopulateCardOrder(pokerEvaluator::EvaluationResult_PlayerEvaluationResult* playerResult, int handType, HandVal handValue) {
-
-	std::vector<int> cardRanks = getHandCards(handType, handValue);
-	for (int i = 0; i < cardRanks.size(); i++) {
-		playerResult->add_cardorder(cardRanks[i]);
-	}
 }
 
 EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
@@ -89,7 +81,7 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 
 		playerEvalResult->set_handtype(static_cast<EvaluationResult_PlayerEvaluationResult_HandType>(handType));
 
-		PopulateCardOrder(playerEvalResult, handType, playerHandValue);
+		playerEvalResult->set_cardorder(getHandCardOrder(handType, playerHandValue));
 		
 		playerEvalResult->set_equityvalue(enumerationResult.ev[i] / enumerationResult.nsamples);
 		playerEvalResult->set_winprobability(100 * enumerationResult.nwinhi[i] / enumerationResult.nsamples);

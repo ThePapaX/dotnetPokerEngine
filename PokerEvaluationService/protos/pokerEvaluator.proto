@@ -55,7 +55,7 @@ message EvaluationResult {
     * If the result is two pairs, and example is (3 2 K), translate to pair of 3, pair of 2, and K high.
     * For 5 card results, for example Straight, will contain just the highest card. Eg (6), straight to the six.
     */
-    repeated int32 cardOrder = 4; 
+    string cardOrder = 4; 
   }
   repeated PlayerEvaluationResult results = 1;
 }
