@@ -452,6 +452,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="include\game_std.h" />
     <ClInclude Include="include\handval.h" />
     <ClInclude Include="include\handval_low.h" />
+    <ClInclude Include="include\inline\eval.h" />
     <ClInclude Include="include\pokenum.h" />
     <ClInclude Include="include\PokerEvaluator.h" />
     <ClInclude Include="include\pokereval_export.h" />

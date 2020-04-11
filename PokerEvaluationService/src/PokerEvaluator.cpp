@@ -2,6 +2,7 @@
 #include <include\PokerEvaluator.h>
 #include <sstream>
 #include <include\pokenum.h>
+#include <include\inline\eval.h>
 
 using pokerEvaluator::EvaluationResult;
 using pokerEvaluator::EvaluationResult_PlayerEvaluationResult_HandType;
@@ -31,6 +32,31 @@ char** PokerEvaluator::makeargs(std::string input, int* argumentCount)
 
 	return argumentVector;
 }
+static std::vector<int> getHandCards(int handType, HandVal handValue) {
+
+	std::vector<int> cards;
+
+	if (StdRules_nSigCards[handType] >= 1)
+		cards.push_back(HandVal_TOP_CARD(handValue));
+	if (StdRules_nSigCards[handType] >= 2)
+		cards.push_back(HandVal_SECOND_CARD(handValue));
+	if (StdRules_nSigCards[handType] >= 3)
+		cards.push_back(HandVal_THIRD_CARD(handValue));
+	if (StdRules_nSigCards[handType] >= 4)
+		cards.push_back(HandVal_FOURTH_CARD(handValue));
+	if (StdRules_nSigCards[handType] >= 5)
+		cards.push_back(HandVal_FIFTH_CARD(handValue));
+
+	return cards;
+}
+
+static void PopulateCardOrder(pokerEvaluator::EvaluationResult_PlayerEvaluationResult* playerResult, int handType, HandVal handValue) {
+
+	std::vector<int> cardRanks = getHandCards(handType, handValue);
+	for (int i = 0; i < cardRanks.size(); i++) {
+		playerResult->add_cardorder(cardRanks[i]);
+	}
+}
 
 EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 {
@@ -38,36 +64,37 @@ EvaluationResult PokerEvaluator::Evaluate(int paramsCount, char** parsedParams)
 	enum_result_t enumerationResult;
 	StdDeck_CardMask *playerCards = new StdDeck_CardMask [ENUM_MAXPLAYERS];
 	StdDeck_CardMask boardCards;
+	int boardCardCount = 0;
 
-	// TODO: agregate results from each hand evaluation.
+	/** 
+	* StdDeck_StdRules_EVAL_TYPE : gives the type of hand from the 
+	* We need to get for each player its: HandVal handval
+	* With that we can get the handtype as : HandVal_HANDTYPE(handval), which returns and integer that we can map.
+	* StdRules_handTypeNames[htype] , will give us a string....
+	* StdRules_nSigCards[htype], will give us how many cards are used for that htype, a number from 1 to 5
+	* Then with that number we can programatically get the card Ranks with:
+	* HandVal_TOP_CARD(handval); HandVal_SECOND_CARD(handval); HandVal_THIRD_CARD(handval) .. etc. 
+	*/
 
-	// StdDeck_StdRules_EVAL_TYPE : gives the type of hand from the 
-	// We need to get for each player its: HandVal handval
-	// With that we can get the handtype as : HandVal_HANDTYPE(handval), which returns and integer that we can map
-	// StdRules_handTypeNames[htype] , will give us a string....
-	// StdRules_nSigCards[htype], will give us how many cards are used for that htype, a number from 1 to 5
-	// Then with that number we can programatically get the card Ranks with:
-	// HandVal_TOP_CARD(handval); HandVal_SECOND_CARD(handval); HandVal_THIRD_CARD(handval) .. etc.
-	// StdDeck_rankChars[HandVal_TOP_CARD(handval)]); -> this wil give us the rank as a char : { '2', 'K', 'Q'... etc } 
-	
-
-	int isError = pokenum(paramsCount, parsedParams, &enumerationResult, &boardCards, &playerCards);
-	std::cout << std::endl;
+	int isError = pokenum(paramsCount, parsedParams, &enumerationResult, &boardCards, &playerCards, boardCardCount);
 
 	for (int i = 0; i < enumerationResult.nplayers; i++){
-		pokerEvaluator::EvaluationResult_PlayerEvaluationResult* playerEvalresult = evaluationResult.add_results();
-		//HandVal playerHandValue = Hand_EVAL_N
-
-		playerEvalresult->add_cardorder(3);
-		playerEvalresult->add_cardorder(2);
-
-		playerEvalresult->set_equityvalue(enumerationResult.ev[i] / enumerationResult.nsamples);
-		playerEvalresult->set_winprobability(100 * enumerationResult.nwinhi[i] / enumerationResult.nsamples);
-
-		playerEvalresult->set_handtype(EvaluationResult_PlayerEvaluationResult_HandType::EvaluationResult_PlayerEvaluationResult_HandType_FullHouse);
+		pokerEvaluator::EvaluationResult_PlayerEvaluationResult* playerEvalResult = evaluationResult.add_results();
 		
+		StdDeck_CardMask playerHand; 
+		Deck_CardMask_XOR(playerHand, playerCards[i], boardCards); // XOR combines the pocket cards with the board cards.
+	
+		HandVal playerHandValue = StdDeck_StdRules_EVAL_N(playerHand, boardCardCount + 2);
+		int handType = HandVal_HANDTYPE(playerHandValue); // handType matches the enum value for HandType below:
+
+		playerEvalResult->set_handtype(static_cast<EvaluationResult_PlayerEvaluationResult_HandType>(handType));
+
+		PopulateCardOrder(playerEvalResult, handType, playerHandValue);
+		
+		playerEvalResult->set_equityvalue(enumerationResult.ev[i] / enumerationResult.nsamples);
+		playerEvalResult->set_winprobability(100 * enumerationResult.nwinhi[i] / enumerationResult.nsamples);
+
 	}
-	std::cout << std::endl;
 
 	return evaluationResult;
 }

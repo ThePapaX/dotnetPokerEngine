@@ -12,7 +12,7 @@
 #include "include/rules_std.h"
 #include "include/enumdefs.h"
 
-int pokenum(int argc, char** argv, enum_result_t* result, StdDeck_CardMask* board, StdDeck_CardMask** pocketCards);
+int pokenum(int argc, char** argv, enum_result_t* result, StdDeck_CardMask* board, StdDeck_CardMask** pocketCards, int &nboard);
 
 static int parseArgs(int argc, char** argv,
 	enum_game_t* game, enum_sample_t* enumType, int* niter,

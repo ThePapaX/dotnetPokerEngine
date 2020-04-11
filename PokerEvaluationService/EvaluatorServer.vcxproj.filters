@@ -85,5 +85,8 @@
     <ClInclude Include="include\PokerEvaluator.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="include\inline\eval.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

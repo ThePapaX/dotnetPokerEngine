@@ -1,10 +1,10 @@
 #include "include/pokenum.h"
 
-int pokenum(int argc, char** argv, enum_result_t* result, StdDeck_CardMask *board, StdDeck_CardMask **pocketCards)
+int pokenum(int argc, char** argv, enum_result_t* result, StdDeck_CardMask *board, StdDeck_CardMask **pocketCards, int &nboard)
 {
 	enum_game_t game;
 	enum_sample_t enumType;
-	int niter = 0, npockets, nboard, err, terse, orderflag;
+	int niter = 0, npockets, err, terse, orderflag;
 	StdDeck_CardMask deadCards;
 
 	err = 0;
