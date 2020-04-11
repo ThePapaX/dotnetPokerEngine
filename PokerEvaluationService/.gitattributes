@@ -1,0 +1,5 @@
+# Exclude the poker-eval.lib headers from the GitHub code statistics.
+
+include/* linguist-vendored
+pokenum.h -linguist-vendored
+PokerEvaluator.h -linguist-vendored
