@@ -5,13 +5,10 @@ namespace GameService.Models
 {
     public interface IGame
     {
-        public LinkedList<GamePlayer> Players { get; }
-        public LinkedListNode<GamePlayer> CurrentActionOn { get; }
         public GamePlayer LastAgressor { get; }
-        public LinkedListNode<GamePlayer> DealerButtonOn { get; }
-        public Dictionary<string, LinkedListNode<GamePlayer>> PlayersMap { get; }
-        public List<Card> Board { get; set; }
-        public uint CurrentPotSize { get; }
+        public Table Table { get; }
+        public List<Card> BoardCards { get; }
+        public double CurrentPotSize { get; }
 
         Task AddPlayer(GamePlayer player);
 

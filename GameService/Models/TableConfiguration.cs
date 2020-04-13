@@ -7,10 +7,10 @@ namespace GameService.Models
 {
     public class TableConfiguration
     {
-        public readonly uint SmallBlindSize;
-        public readonly uint BigBlindSize;
+        public readonly double SmallBlindSize;
+        public readonly double BigBlindSize;
         public uint PlayerTimeout;
-        public uint StartingChipCount;
+        public readonly double StartingChipCount;
         public TableConfiguration()
         {
             SmallBlindSize = 1000;
@@ -18,7 +18,7 @@ namespace GameService.Models
             PlayerTimeout = 15;
             StartingChipCount = 500000;
         }
-        public TableConfiguration(uint smallBlindSize, uint bigBlindSize, uint playerTimeout, uint startingChipCount)
+        public TableConfiguration(double smallBlindSize, double bigBlindSize, uint playerTimeout, double startingChipCount)
         {
             SmallBlindSize = smallBlindSize;
             BigBlindSize = bigBlindSize;

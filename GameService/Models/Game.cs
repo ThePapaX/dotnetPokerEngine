@@ -14,51 +14,56 @@ namespace GameService.Models
     public class Game : IGame, IPokerHubServer
     {
         private readonly IHubContext<PokerHub> _hubContext;
-        public LinkedList<GamePlayer> Players { get; private set; }
 
-        [IgnoreMember]
-        [JsonIgnore]
-        public Dictionary<string, LinkedListNode<GamePlayer>> PlayersMap { get; private set; }
+        public Table Table { get; private set; }
 
         public LinkedListNode<GamePlayer> CurrentActionOn { get; private set; }
         public GamePlayer LastAgressor { get; private set; }
-        public LinkedListNode<GamePlayer> DealerButtonOn { get; private set; }
-        public TableConfiguration TableConfig { get; private set; }
-        public uint CurrentPotSize { get; private set; }
-        private void AddBetToPot(uint bet) => CurrentPotSize += bet;
-        public List<Card> Board { get; set; }
+       
+        public double CurrentPotSize { get; private set; }
+        public List<Card> BoardCards { get; set; }
         private CardDeck CardDeck { get; set; }
 
-        private readonly HandStateMachine HandState;
+        private readonly HandStageHelper HandState;
 
         private CancellationTokenSource PlayerTimerCancellationTokenSource;
 
         public Game(IHubContext<PokerHub> hubContext, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
         {
-            TableConfig = tableConfig;
+            Table = new Table(tableConfig);
             _hubContext = hubContext;
-            Players = new LinkedList<GamePlayer>();
-            PlayersMap = new Dictionary<string, LinkedListNode<GamePlayer>>();
-            Board = new List<Card>(5);
-            HandState = new HandStateMachine();
+            BoardCards = new List<Card>(5);
+            HandState = new HandStageHelper();
         }
-
+        private void AddBetToPot(double bet) => CurrentPotSize += bet;
         public Game(IHubContext<PokerHub> hubContext) : this(hubContext, new TableConfiguration()) { }
 
         #region PlayerActions
 
-        private void Raise(uint betSize, string playerId)
+        
+        private void Raise(double betSize, string playerId)
         {
+            var player = Table.PlayersMap[playerId].Value;
+            player.Bet(betSize);
             AddBetToPot(betSize);
-            LastAgressor = PlayersMap[playerId].Value;
+
+            LastAgressor = player;
         }
 
-        private void Check(string playerId) => throw new NotImplementedException();
+        private void Call(double betSize, string playerId)
+        {
+            var player = Table.PlayersMap[playerId].Value;
+            player.Call(betSize);
+            AddBetToPot(betSize);
+
+        }
+
+        private void Check(string playerId) { }
 
         private void Fold(string playerId)
         {
-            var player = PlayersMap[playerId].Value;
-            player.IsActiveInHand = false;
+            var player = Table.PlayersMap[playerId].Value;
+            player.ActiveInHand = false;
             
         }
 
@@ -67,18 +72,18 @@ namespace GameService.Models
             //TODO: validate that the player can perform the given action. E.G Can't check and Can't call if someone has raised. 
             switch (playerAction.EventType)
             {
-                case PlayerActionType.PostSmallBlind:
-                    Raise(TableConfig.SmallBlindSize, playerAction.PlayerId);
-                    await DispatchPlayerAction(playerAction);
-                    break;
+                //case PlayerActionType.PostSmallBlind:
+                //    Raise(Table.TableConfig.SmallBlindSize, playerAction.PlayerId);
+                //    await DispatchPlayerAction(playerAction);
+                //    break;
 
-                case PlayerActionType.PostBigBlind:
-                    Raise(TableConfig.BigBlindSize, playerAction.PlayerId);
-                    await DispatchPlayerAction(playerAction);
-                    break;
+                //case PlayerActionType.PostBigBlind:
+                //    Raise(Table.TableConfig.BigBlindSize, playerAction.PlayerId);
+                //    await DispatchPlayerAction(playerAction);
+                //    break;
 
                 case PlayerActionType.Call:
-                    AddBetToPot(playerAction.BetSize);
+                    Call(playerAction.BetSize, playerAction.PlayerId);
                     await DispatchPlayerAction(playerAction);
                     break;
 
@@ -93,6 +98,7 @@ namespace GameService.Models
                     break;
 
                 case PlayerActionType.Check:
+                    Check(playerAction.PlayerId);
                     await DispatchPlayerAction(playerAction);
                     break;
 
@@ -115,12 +121,7 @@ namespace GameService.Models
 
         public async Task AddPlayer(GamePlayer player)
         {
-            player.SeatNumber = Players.Count + 1;
-            player.CurrentStack = TableConfig.StartingChipCount; //TODO: Check if the player is reconnecting or something
-
-            var playersNode = Players.AddLast(player);
-
-            PlayersMap[player.Id] = playersNode;
+            Table.AddPlayer(player);
 
             var gameEvent = new GameEvent()
             {
@@ -133,8 +134,7 @@ namespace GameService.Models
 
         public async Task RemovePlayer(GamePlayer player)
         {
-            Players.Remove(player);
-            PlayersMap.Remove(player.Id);
+            Table.RemovePlayer(player);
             var gameEvent = new GameEvent()
             {
                 EventType = GameActionType.PlayerLeft,
@@ -146,21 +146,22 @@ namespace GameService.Models
 
         public async Task RemovePlayer(string playerId)
         {
-            var playerNode = PlayersMap[playerId];
-            if (playerNode != null)
+            if (Table.PlayersMap.ContainsKey(playerId))
             {
+                var playerNode = Table.PlayersMap[playerId];
                 await RemovePlayer(playerNode.Value);
             }
+            
         }
 
         public async Task UpdateDealerButton()
         {
-            DealerButtonOn = DealerButtonOn?.Next ?? Players.First;
+            Table.MoveDealerButton();
 
             var gameEvent = new GameEvent()
             {
                 EventType = GameActionType.UpdateDealerButton,
-                Data = DealerButtonOn.Value.Id
+                Data = Table.Dealer.Value.Id
             };
 
             await DispatchGameEvent(gameEvent);
@@ -168,24 +169,12 @@ namespace GameService.Models
 
         public bool UpdateNextActionOn()
         {
-            if(CurrentActionOn.Next == null)
-            {
-                CurrentActionOn = Players.First;
-            }
-            else
-            {
-                CurrentActionOn = CurrentActionOn.Next;
-            }
 
-            if (CurrentActionOn.Value == LastAgressor || (CurrentActionOn == DealerButtonOn && LastAgressor == null))
-            {
-                // No More actions
-                return false;
-            }
+            CurrentActionOn = Table.GetNextActivePlayerNode(CurrentActionOn);
 
-            if (!CurrentActionOn.Value.IsActiveInHand)
+            if(CurrentActionOn.Value == LastAgressor || CurrentActionOn == null)
             {
-                return UpdateNextActionOn();
+                return false; // No More actions. No more active players = dead hand
             }
 
             return true;
@@ -193,27 +182,20 @@ namespace GameService.Models
 
         public async Task StartGame() { 
             await StartNewHand();
-
-            //Pre flop
-            //await RunPreFlop();
-            CurrentActionOn = DealerButtonOn;
             
-            _ = UpdateNextActionOn();
+            Table.MoveDealerButton();
+            Table.MoveBlindsPointers();
+            
             await CollectSmallBlind();
-
-            _ = UpdateNextActionOn();
             await CollectBigBlind();
 
-            var canDeal = UpdateNextActionOn();
-
-            while (canDeal || HandState.GetCurrentStateValue() != Models.HandState.ShowDown)
+            while (Table.ActivePlayersCount() > 0 && HandState.GetCurrentStage() != HandStage.Finished)
             {
+                
                 await Deal();
                 await RunActionLoop();
                 HandState.MoveNext();
 
-                CurrentActionOn = DealerButtonOn;
-                canDeal = UpdateNextActionOn();
             }
 
             // asess game state, means that the hand is over
@@ -223,10 +205,15 @@ namespace GameService.Models
 
             
         }
-        private bool NoMoreActions => LastAgressor != CurrentActionOn.Value;
+
         private async Task RunActionLoop()
         {
-            while(!NoMoreActions) //No more action condition
+            Table.SetFirstToAct(HandState.GetCurrentStage());
+            LastAgressor = Table.CurrentActionOn.Value;
+
+            CurrentActionOn = Table.CurrentActionOn; 
+
+            while(true) // Breaks on No more actions condition
             {
                 // wait for player action, this action should be cancelled by an action executed by the player
                 PlayerTimerCancellationTokenSource = new CancellationTokenSource();
@@ -247,45 +234,45 @@ namespace GameService.Models
                     // Player did action, player action is handled separatedly
                     Debug.WriteLine("CONTINUING ACTION LOOP AFTER TIMEOUT TASK WAS CANCELLED");
                 }
+
                 UpdateNextActionOn();
+
+                if (CurrentActionOn.Value == LastAgressor) break;
             }
+            
         }
-        private void SetPlayersToActive()
+        private void InvokePlayersNewHand()
         {
-            foreach (var player in Players)
+            foreach (var player in Table.Players)
             {
-                player.IsActiveInHand = !player.IsAbsent;
+                player.NewHand();
             }
         }
 
         public async Task StartNewHand()
         {
             //TODO: add check that the current hand is Not Active before resetting it.
-            SetPlayersToActive();
+            InvokePlayersNewHand();
             HandState.Reset();
             CurrentPotSize = 0;
             CardDeck = new CardDeck();
             LastAgressor = null;
 
-            await UpdateDealerButton();
-        }
+            var newHandEvent = new GameEvent()
+            {
+                EventType = GameActionType.NewHand,
+                Data = new
+                {
+                    HandId = Guid.NewGuid().ToString()
+                }
+            };
 
-        public async Task RunPreFlop()
-        {
-            CurrentActionOn = DealerButtonOn.Next;
-
-            await CollectSmallBlind();
-            UpdateNextActionOn();
-
-            await CollectBigBlind();
-            UpdateNextActionOn();
-
-            await Deal();
+            await DispatchGameEvent(newHandEvent);
         }
 
         public async Task<bool> WaitForAction(CancellationTokenSource source)
         {
-            await Task.Delay((int)TableConfig.PlayerTimeout * 1000, source.Token);
+            await Task.Delay((int)Table.TableConfig.PlayerTimeout * 1000, source.Token);
             
             return false;
 
@@ -293,13 +280,16 @@ namespace GameService.Models
 
         private async Task CollectSmallBlind()
         {
+            var smallBlindPlayer = Table.SmallBlind.Value;
+            smallBlindPlayer.Call(Table.TableConfig.SmallBlindSize);
+
             var smallBlindEvent = new GameEvent()
             {
                 EventType = GameActionType.CollectSmallBlind,
                 Data = new
                 {
-                    Size = TableConfig.SmallBlindSize,
-                    PlayerID = CurrentActionOn.Value.Id
+                    Size = Table.TableConfig.SmallBlindSize,
+                    PlayerID = smallBlindPlayer.Id
                 }
             };
 
@@ -308,13 +298,16 @@ namespace GameService.Models
 
         private async Task CollectBigBlind()
         {
+            var bigBlindPlayer = Table.BigBlind.Value;
+            bigBlindPlayer.Call(Table.TableConfig.BigBlindSize);
+
             var bigBlindEvent = new GameEvent()
             {
                 EventType = GameActionType.CollectBigBlind,
                 Data = new
                 {
-                    Size = TableConfig.BigBlindSize,
-                    PlayerID = CurrentActionOn.Value.Id
+                    Size = Table.TableConfig.BigBlindSize,
+                    PlayerID = Table.BigBlind.Value.Id
                 }
             };
             await DispatchGameEvent(bigBlindEvent);
@@ -340,15 +333,15 @@ namespace GameService.Models
 
         public async Task Deal()
         {
-            switch (HandState.GetCurrentStateValue())
+            switch (HandState.GetCurrentStage())
             {
-                case Models.HandState.Preflop:
-                    var currentPlayer = DealerButtonOn.Next;
-                    var cardDealtPerPlayerCount = 1;
+                case Models.HandStage.Preflop:
+                    var currentPlayer = Table.SmallBlind;
+                    var cardsDealtPerPlayer = 0;
 
-                    while (!(currentPlayer == DealerButtonOn && cardDealtPerPlayerCount == 2))
+                    while (!(cardsDealtPerPlayer == 2))
                     {
-                        if (currentPlayer == DealerButtonOn) cardDealtPerPlayerCount++;
+                        if (currentPlayer == Table.Dealer) cardsDealtPerPlayer++;
                         
                         var playerCard = CardDeck.GetNextCard();
 
@@ -362,36 +355,35 @@ namespace GameService.Models
                         };
 
                         await DispatchPlayerCard(dealCardEvent);
-                        
 
-                        currentPlayer = currentPlayer.Next;
+                        currentPlayer = Table.GetNextActivePlayerNode(currentPlayer);
                     }
 
                     break;
 
-                case Models.HandState.Flop:
+                case Models.HandStage.Flop:
                     _ = CardDeck.GetNextCard();
                     List<Card> cardsToDeal = CardDeck.GetNextCards(3);
                     
-                    Board.AddRange(cardsToDeal);
+                    BoardCards.AddRange(cardsToDeal);
 
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealFlop, Data = cardsToDeal });
 
                     break;
 
-                case Models.HandState.Turn:
+                case Models.HandStage.Turn:
                     _ = CardDeck.GetNextCard();
                     var turnCard = CardDeck.GetNextCard();
-                    Board.Add(turnCard);
+                    BoardCards.Add(turnCard);
 
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealTurn, Data = turnCard });
 
                     break;
 
-                case Models.HandState.River:
+                case Models.HandStage.River:
                     _ = CardDeck.GetNextCard();
                     var riverCard = CardDeck.GetNextCard();
-                    Board.Add(riverCard);
+                    BoardCards.Add(riverCard);
                     await DispatchGameEvent(new GameEvent() { EventType = GameActionType.DealTurn, Data = riverCard });
 
                     break;

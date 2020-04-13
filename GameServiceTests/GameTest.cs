@@ -60,9 +60,9 @@ namespace GameServiceTests
 
             // Assert
 
-            Assert.AreEqual(game.Players.Count, 1);
-            Assert.AreEqual(game.Players.First.Value.Id, newPlayer.Id);
-            Assert.AreEqual(game.PlayersMap[newPlayer.Id].Value, newPlayer);
+            Assert.AreEqual(game.Table.Players.Count, 1);
+            Assert.AreEqual(game.Table.Players.First.Value.Id, newPlayer.Id);
+            Assert.AreEqual(game.Table.PlayersMap[newPlayer.Id].Value, newPlayer);
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace GameServiceTests
             await game.UpdateDealerButton();
 
             // Assert
-            Assert.AreEqual(game.DealerButtonOn.Value, player);
+            Assert.AreEqual(game.Table.Dealer.Value, player);
             mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && obj.Length == 1 && ((GameEvent)obj[0]).EventType == GameActionType.UpdateDealerButton), default), Times.Once);
 
         }

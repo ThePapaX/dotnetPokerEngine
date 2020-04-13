@@ -1,23 +1,49 @@
-﻿namespace GameService.Models
+﻿using System;
+
+namespace GameService.Models
 {
     public class GamePlayer
     {
         public string Id { get; set; }
         public int SeatNumber { get; set; }
-        public string Username { get; set; }
 
-        //TODO: make this more solid, all this properties should be protected only modifiable by the game.
-        public bool IsActiveInHand { get; set; }
-        public bool IsAbsent { get; set; }
-        public long BetSize { get; set; }
-        public long CurrentStack { get; set; }
+        public bool ActiveInHand { get; set; }
+        public bool Absent { get; set; }
+        public double CurrentBetSize { get; private set; }
+        public double CurrentStack { get; private set; }
         public GamePlayer()
         {
             SeatNumber = -1;
-            IsActiveInHand = false;
-            IsAbsent = false;
-            BetSize = 0;
+            ActiveInHand = false;
+            Absent = false;
+            CurrentBetSize = 0;
             CurrentStack = 0;
+        }
+
+        internal void SetCurrentStack(double amount)
+        {
+            CurrentStack = amount;
+        }
+
+        internal void Bet(double amount)
+        {
+            CurrentBetSize += amount;
+            CurrentStack -= amount;
+        }
+        internal void AwardPot(double amount)
+        { 
+            CurrentStack += amount;
+        }
+        internal void NewHand()
+        {
+            CurrentBetSize = 0;
+            ActiveInHand = !Absent;
+        }
+
+        internal void Call(double amount)
+        {
+            CurrentBetSize += amount;
+            CurrentStack -= amount;
         }
     }
 }
