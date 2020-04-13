@@ -11,23 +11,24 @@ namespace PokerEvaluatorClient
         {
             Console.WriteLine("----- RESULT -----");
             Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions() {WriteIndented = true }));
-            Console.WriteLine("-------END-------");
+            Console.WriteLine("--------------");
+            Console.Write("\n\n command: ");
         }
         static void Main(string[] args)
         {
-            Channel channel = new Channel("127.0.0.1:50051", ChannelCredentials.Insecure);
+            var evaluatorClient = new EvaluatorGrpcClient("127.0.0.1:50051", ChannelCredentials.Insecure);
 
-            var client = new Evaluator.EvaluatorClient(channel);
-            String command = "pokenum -h As Ac - 2h 9d - Ks Kd -- 5s 4h 3h 7c 4c";
+            var command = "pokenum -h As Ac - 2h 9d - Ks Kd -- 5s 4h 3h 7c 4c";
 
-            EvaluationResult result = client.Evaluate(new EvaluationRequest { Command = command });
+            EvaluationResult result = evaluatorClient.EvaluateBoard(command);
 
             PrintResult(result);
 
-            channel.ShutdownAsync().Wait();
-
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+            while ((command = Console.ReadLine()) != "exit")
+            {                
+                result = evaluatorClient.EvaluateBoard(command);
+                PrintResult(result);
+            }
         }
     }
 }
