@@ -9,5 +9,9 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="3.1.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PokerEvaluatorClient\PokerEvaluatorClient.csproj" />
+  </ItemGroup>
+
 
 </Project>

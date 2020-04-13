@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PokerEvaluatorClient;
 
 namespace GameService
 {
@@ -29,6 +30,7 @@ namespace GameService
         {
             services.AddControllers();
             services.AddSingleton<IGame, Game>();
+            services.AddSingleton<IPokerEvaluator, EvaluatorGrpcClient>();
 
             services.AddSignalR()
                  //.AddJsonProtocol(options =>

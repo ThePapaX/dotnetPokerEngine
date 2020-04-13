@@ -3,6 +3,8 @@ using GameService.Models;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 using NUnit.Framework;
+using PokerEvaluator;
+using PokerEvaluatorClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -22,9 +24,17 @@ namespace GameServiceTests
 
             return (mockHubContext, mockClientProxy);
         }
+        private static Mock<IPokerEvaluator> GetMockPokerEvaluator()
+        {
+            var mock = new Mock<IPokerEvaluator>();
+            mock.Setup(mc => mc.EvaluateBoard(It.IsAny<string>())).Returns(new EvaluationResult());
+
+            return mock;
+        }
         private static (Game, Mock<IHubContext<PokerHub>>, Mock<IClientProxy>) GetMocks() {
             (var mockHubContext, var mockClientProxy) = GetMockPokerHubContext();
-            var mockGame = new Game(mockHubContext.Object);
+            var mockPokerEvaluator = GetMockPokerEvaluator();
+            var mockGame = new Game(mockHubContext.Object, mockPokerEvaluator.Object);
 
             return (mockGame, mockHubContext, mockClientProxy);
         }

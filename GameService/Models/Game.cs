@@ -1,6 +1,7 @@
 ﻿using GameService.Hubs;
 using MessagePack;
 using Microsoft.AspNetCore.SignalR;
+using PokerEvaluatorClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ namespace GameService.Models
     public class Game : IGame, IPokerHubServer
     {
         private readonly IHubContext<PokerHub> _hubContext;
+        private readonly IPokerEvaluator _pokerEvaluator;
 
         public Table Table { get; private set; }
 
@@ -28,15 +30,17 @@ namespace GameService.Models
 
         private CancellationTokenSource PlayerTimerCancellationTokenSource;
 
-        public Game(IHubContext<PokerHub> hubContext, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
+        public Game(IHubContext<PokerHub> hubContext, IPokerEvaluator pokerEvaluator, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
         {
-            Table = new Table(tableConfig);
             _hubContext = hubContext;
+            _pokerEvaluator = pokerEvaluator;
+
+            Table = new Table(tableConfig);
             BoardCards = new List<Card>(5);
             HandState = new HandStageHelper();
         }
         private void AddBetToPot(double bet) => CurrentPotSize += bet;
-        public Game(IHubContext<PokerHub> hubContext) : this(hubContext, new TableConfiguration()) { }
+        public Game(IHubContext<PokerHub> hubContext, IPokerEvaluator pokerEvaluator) : this(hubContext, pokerEvaluator, new TableConfiguration()) { }
 
         #region PlayerActions
 
