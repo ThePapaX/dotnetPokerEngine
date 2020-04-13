@@ -7,6 +7,7 @@ namespace GameService.Models
 {
     public enum CardRank
     {
+        None,
         Ace = 1,
         Two,
         Three,

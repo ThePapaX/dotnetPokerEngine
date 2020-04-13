@@ -21,9 +21,10 @@ namespace GameService.Models
 
         public LinkedListNode<GamePlayer> CurrentActionOn { get; private set; }
         public GamePlayer LastAgressor { get; private set; }
-       
+
         public double CurrentPotSize { get; private set; }
-        public List<Card> BoardCards { get; set; }
+        public List<Card> BoardCards { get; private set; }
+
         private CardDeck CardDeck { get; set; }
 
         private readonly HandStageHelper HandState;
@@ -324,10 +325,11 @@ namespace GameService.Models
 
         public async Task DispatchPlayerCard(GameEvent gameEventData)
         {
-            await _hubContext.Clients.User(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+            IClientProxy user = _hubContext.Clients.User(gameEventData.Data.PlayerId);
+            await user.SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
 
-            gameEventData.Data.Card = new Card();
-            await _hubContext.Clients.AllExcept(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+            //IClientProxy users = _hubContext.Clients.AllExcept((string)gameEventData.Data.PlayerId);
+            //await users.SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
         }
 
         public async Task DispatchPlayerAction(PlayerEvent playerAction)
@@ -345,9 +347,9 @@ namespace GameService.Models
 
                     while (!(cardsDealtPerPlayer == 2))
                     {
-                        if (currentPlayer == Table.Dealer) cardsDealtPerPlayer++;
                         
                         var playerCard = CardDeck.GetNextCard();
+                        currentPlayer.Value.PocketCards[cardsDealtPerPlayer] = playerCard;
 
                         var dealCardEvent = new GameEvent()
                         {
@@ -360,7 +362,9 @@ namespace GameService.Models
 
                         await DispatchPlayerCard(dealCardEvent);
 
+                        if (currentPlayer == Table.Dealer) cardsDealtPerPlayer++;
                         currentPlayer = Table.GetNextActivePlayerNode(currentPlayer);
+       
                     }
 
                     break;
