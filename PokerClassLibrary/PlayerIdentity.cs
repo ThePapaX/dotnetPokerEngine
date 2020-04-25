@@ -15,6 +15,7 @@ namespace PokerClassLibrary
 
         public string Password { get; set; }
 
+        // Base64 encoded
         public string Hash { get; set; }
 
         public string SessionToken { get; set; }

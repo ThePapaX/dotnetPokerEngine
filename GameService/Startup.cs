@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
 using GameService.Context;
 using GameService.Hubs;
 using GameService.Models;
+using GameService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using PokerEvaluatorClient;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace GameService
 {
@@ -37,11 +34,37 @@ namespace GameService
             services.AddDbContext<GameDbContext>(options =>
             {
                 options.UseMySQL(
-                    Configuration.GetConnectionString("MySqlConnection"),
-                        b => b.MigrationsAssembly("Poker")
+                    Configuration.GetConnectionString("MySqlConnection") /*,b => b.MigrationsAssembly("NetCorePoker")*/
                     );
 
             });
+
+            #region JWT 
+            
+            var key = Encoding.UTF8.GetBytes(Configuration.GetSection("SecurityKey").Value);
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                };
+            });
+
+            services.AddScoped<IIdentityService, IdentityService>();
+
+            #endregion JWT
+
 
             services.AddSignalR()
                  //.AddJsonProtocol(options =>

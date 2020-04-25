@@ -8,6 +8,7 @@ using System.Threading;
 using GameService.Models;
 using PokerClassLibrary;
 
+
 namespace GameService.Context
 {
     public class GameDbContext : DbContext
@@ -15,11 +16,13 @@ namespace GameService.Context
 
         public GameDbContext(DbContextOptions<GameDbContext> options) : base(options)
         {
-            Database.Migrate();
+            Database.EnsureDeleted();
+            Database.EnsureCreated();
+            //Database.Migrate();
         }
 
         public DbSet<Player> Players { get; set; }
-        public DbSet<PlayerIdentity> UsersIdentity { get; set; }
+        public DbSet<PlayerIdentity> PlayerIdentity { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
