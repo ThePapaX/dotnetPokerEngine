@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GameService.Context;
 using GameService.Hubs;
 using GameService.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,6 +33,15 @@ namespace GameService
             services.AddControllers();
             services.AddSingleton<IGame, Game>();
             services.AddSingleton<IPokerEvaluator, EvaluatorGrpcClient>();
+
+            services.AddDbContext<GameDbContext>(options =>
+            {
+                options.UseMySQL(
+                    Configuration.GetConnectionString("MySqlConnection"),
+                        b => b.MigrationsAssembly("Poker")
+                    );
+
+            });
 
             services.AddSignalR()
                  //.AddJsonProtocol(options =>

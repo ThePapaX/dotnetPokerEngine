@@ -7,9 +7,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="3.1.3" />
+    <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.19" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PokerClassLibrary\PokerClassLibrary.csproj" />
     <ProjectReference Include="..\PokerEvaluatorClient\PokerEvaluatorClient.csproj" />
   </ItemGroup>
 
