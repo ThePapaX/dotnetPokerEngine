@@ -17,14 +17,11 @@ namespace GameService.Hubs
         public async Task SendMessage(string user, string message)
         {
             await Clients.All.SendAsync("ReceiveMessage", Context.ConnectionId, message);
-            await Clients.All.SendAsync("GameState", _game);
         }
 
         public async Task ExecutePlayerAction(PlayerEvent playerAction)
         {
-            // Do the action
             await _game.ProcessClientAction(playerAction);
-
         }
 
         public override async Task OnConnectedAsync()

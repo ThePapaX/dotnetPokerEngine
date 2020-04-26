@@ -12,7 +12,8 @@ namespace PokerClassLibrary
         [ForeignKey("Player")]
         [Key]
         public Guid PlayerId { get; set; }
-
+        
+        [StringLength(255)]
         public string Password { get; set; }
 
         // Base64 encoded

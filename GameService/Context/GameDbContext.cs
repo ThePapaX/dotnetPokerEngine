@@ -7,18 +7,44 @@ using System.Threading.Tasks;
 using System.Threading;
 using GameService.Models;
 using PokerClassLibrary;
-
+using GameService.Utilities;
+using Microsoft.Extensions.Configuration;
+using System.Data.Entity.ModelConfiguration.Configuration;
 
 namespace GameService.Context
 {
     public class GameDbContext : DbContext
     {
 
-        public GameDbContext(DbContextOptions<GameDbContext> options) : base(options)
+        public GameDbContext(DbContextOptions<GameDbContext> options, IConfiguration config) : base(options)
         {
-            Database.EnsureDeleted();
+            //Database.EnsureDeleted();
             Database.EnsureCreated();
             //Database.Migrate();
+
+            if (Players.Count() == 0) { 
+                try
+                {
+                    var hash = new Guid().ToString();
+                    Players.Add(new Player()
+                    {
+                        UserName = "ThePapaX",
+                        Name = "Armando Lozada",
+                        Email = "arloznav.sis@gmail.com",
+                        Identity = new PlayerIdentity()
+                        {
+                            Hash= hash,
+                            Password = Encryption.EncryptPassword("123", hash)
+                        }
+
+                    });
+                    this.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
         }
 
         public DbSet<Player> Players { get; set; }
@@ -31,9 +57,8 @@ namespace GameService.Context
             modelBuilder.Entity<Player>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Email).IsRequired();
-
-                //entity.Property(e=> e.Id).HasDefaultValueSql("newid()"); OR newsequentialid()
+                //entity.Property(e => e.Email)
+                entity.HasIndex(p => p.Email);
 
                 entity.HasOne(u => u.Identity)
                 .WithOne(ui => ui.Player)

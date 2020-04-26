@@ -36,28 +36,34 @@ namespace GameService
                 options.UseMySQL(
                     Configuration.GetConnectionString("MySqlConnection") /*,b => b.MigrationsAssembly("NetCorePoker")*/
                     );
-
             });
 
             #region JWT 
             
-            var key = Encoding.UTF8.GetBytes(Configuration.GetSection("SecurityKey").Value);
-            services.AddAuthentication(x =>
+            var key = Encoding.UTF8.GetBytes(Configuration.GetSection("CryptographicKey").Value);
+            services.AddAuthentication(options =>
             {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(x =>
+            .AddJwtBearer(options =>
             {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
+                options.Events = new JwtBearerEvents() { 
+                    OnTokenValidated = async ctx =>
+                    {
+                        var principal = ctx.Principal;
+                    }
+                };
+                options.RequireHttpsMetadata = true; //TODO: load from config.
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateLifetime = true,
+                    ValidIssuer = "NetCorePoker"
                 };
             });
 
@@ -74,7 +80,6 @@ namespace GameService
                  .AddMessagePackProtocol();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -93,6 +98,7 @@ namespace GameService
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

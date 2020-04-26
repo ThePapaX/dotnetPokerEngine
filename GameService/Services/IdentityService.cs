@@ -1,12 +1,11 @@
 ﻿using GameService.Context;
 using GameService.Utilities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using PokerClassLibrary;
 using System;
-using System.Collections.Generic;
-using System.Data.Entity;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,16 +15,17 @@ namespace GameService.Services
     public class IdentityService : IIdentityService
     {
         private readonly GameDbContext _context;
-        private readonly string _jwtCryptoKey;
+        readonly string JwtCryptoKey;
 
-        public IdentityService(GameDbContext context, string securityKey)
+        public IdentityService(GameDbContext context, IConfiguration config)
         {
             _context = context;
+            JwtCryptoKey = config.GetSection("CryptographicKey").Value;
         }
 
-        async Task<Player> IIdentityService.Authenticate(string username, string password)
+        async Task<Player> IIdentityService.Authenticate(string email, string password)
         {
-            var user = await _context.Players.Include(user => user.Identity).SingleOrDefaultAsync(user => user.UserName == username);
+            var user = await _context.Players.Include(user => user.Identity).SingleOrDefaultAsync(user => user.Email == email);
 
             // return null if user not found
             if (user == null)
@@ -38,15 +38,16 @@ namespace GameService.Services
 
             // authentication successful so generate jwt token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtCryptoKey);
+            var key = Encoding.ASCII.GetBytes(JwtCryptoKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim("Id", user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email)
                 }),
+                Issuer = "NetCorePoker",
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             };
