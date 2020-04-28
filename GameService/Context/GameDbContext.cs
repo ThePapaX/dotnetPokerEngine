@@ -57,8 +57,9 @@ namespace GameService.Context
             modelBuilder.Entity<Player>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                //entity.Property(e => e.Email)
-                entity.HasIndex(p => p.Email);
+                
+                entity.HasIndex(player => player.Email)
+                .IsUnique();
 
                 entity.HasOne(u => u.Identity)
                 .WithOne(ui => ui.Player)

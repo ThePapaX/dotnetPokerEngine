@@ -14,18 +14,19 @@ namespace GameService.Services
 {
     public class IdentityService : IIdentityService
     {
-        private readonly GameDbContext _context;
+        private readonly GameDbContext _dBcontext;
         readonly string JwtCryptoKey;
 
         public IdentityService(GameDbContext context, IConfiguration config)
         {
-            _context = context;
+            _dBcontext = context;
             JwtCryptoKey = config.GetSection("CryptographicKey").Value;
         }
+        
 
-        async Task<Player> IIdentityService.Authenticate(string email, string password)
+        public async Task<Player> Authenticate(string email, string password)
         {
-            var user = await _context.Players.Include(user => user.Identity).SingleOrDefaultAsync(user => user.Email == email);
+            var user = await _dBcontext.Players.Include(user => user.Identity).SingleOrDefaultAsync(user => user.Email == email);
 
             // return null if user not found
             if (user == null)
@@ -55,20 +56,20 @@ namespace GameService.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             user.Identity.SessionToken = tokenHandler.WriteToken(token);
 
-            _context.Players.Update(user);
+            _dBcontext.Players.Update(user);
 
-            await _context.SaveChangesAsync();
+            await _dBcontext.SaveChangesAsync();
 
 
             return user;
         }
 
-        Task<bool> IIdentityService.IsAuthenticated(Guid playerId)
+        public Task<bool> IsAuthenticated(Guid playerId)
         {
             throw new NotImplementedException();
         }
 
-        Task IIdentityService.Logout(Guid playerId)
+        public Task Logout(Guid playerId)
         {
             throw new NotImplementedException();
         }

@@ -31,7 +31,12 @@ namespace GameService.Controllers
             if (user == null)
                 return BadRequest(new { message = "Username or password is incorrect" });
 
-            return Ok(user.Identity.SessionToken);
+            //Temporal response while we implement a proper authentication
+            return Ok(new { 
+                token_type = "Bearer", 
+                access_token =  user.Identity.SessionToken, 
+                expires_on  = DateTime.UtcNow.AddDays(1) 
+            });
         }
         
         [HttpGet("logout")]

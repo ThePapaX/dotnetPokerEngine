@@ -18,8 +18,11 @@ namespace PokerClassLibrary
         public string UserName { get; set; }
         
         [StringLength(255)]
+        [EmailAddress]
+        [Required]
         public string Email { get; set; }
 
+        [System.Text.Json.Serialization.JsonIgnore]
         public virtual PlayerIdentity Identity { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastUpdatedAt { get; set; }

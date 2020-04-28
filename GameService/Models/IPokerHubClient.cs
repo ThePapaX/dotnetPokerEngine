@@ -5,6 +5,6 @@ namespace GameService.Models
     public interface IPokerHubClient
     {
         Task ExecutePlayerAction(PlayerEvent action);
-        Task SendMessage(string senderId, string message);
+        Task SendMessage(string message);
     }
 }

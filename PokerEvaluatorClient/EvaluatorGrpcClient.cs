@@ -12,6 +12,8 @@ namespace PokerEvaluatorClient
         private readonly Evaluator.EvaluatorClient _gRpcClient;
         public EvaluatorGrpcClient(string connectionString = "127.0.0.1:50051", ChannelCredentials credentials = null)
         {
+            if (credentials == null) credentials = ChannelCredentials.Insecure;
+
             _channel = new Channel(connectionString, credentials);
             _gRpcClient = new Evaluator.EvaluatorClient(_channel);
 

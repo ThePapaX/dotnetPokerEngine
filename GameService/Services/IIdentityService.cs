@@ -6,8 +6,8 @@ namespace GameService.Services
 {
     public interface IIdentityService
     {
-        Task<Player> Authenticate(string username, string password);
-        Task<bool> IsAuthenticated(Guid playerId);
-        Task Logout(Guid playerId);
+        public Task<Player> Authenticate(string username, string password);
+        public Task<bool> IsAuthenticated(Guid playerId);
+        public Task Logout(Guid playerId);
     }
 }

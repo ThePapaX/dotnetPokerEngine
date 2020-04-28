@@ -127,6 +127,8 @@ namespace GameService.Models
         public async Task AddPlayer(GamePlayer player)
         {
             Table.AddPlayer(player);
+            
+            //TODO: When adding the player we must communicate with the Chips service, and perform the respective operations.
 
             var gameEvent = new GameEvent()
             {

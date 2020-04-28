@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using PokerEvaluatorClient;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace GameService
 {
@@ -27,9 +29,11 @@ namespace GameService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            //services.AddControllers();
+            services.AddControllersWithViews();
             services.AddSingleton<IGame, Game>();
             services.AddSingleton<IPokerEvaluator, EvaluatorGrpcClient>();
+            services.AddScoped<IIdentityService, IdentityService>();
 
             services.AddDbContext<GameDbContext>(options =>
             {
@@ -39,7 +43,7 @@ namespace GameService
             });
 
             #region JWT 
-            
+
             var key = Encoding.UTF8.GetBytes(Configuration.GetSection("CryptographicKey").Value);
             services.AddAuthentication(options =>
             {
@@ -48,10 +52,25 @@ namespace GameService
             })
             .AddJwtBearer(options =>
             {
-                options.Events = new JwtBearerEvents() { 
+                options.Events = new JwtBearerEvents()
+                {
                     OnTokenValidated = async ctx =>
                     {
                         var principal = ctx.Principal;
+                    },
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/pokerHub")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
                     }
                 };
                 options.RequireHttpsMetadata = true; //TODO: load from config.
@@ -67,17 +86,17 @@ namespace GameService
                 };
             });
 
-            services.AddScoped<IIdentityService, IdentityService>();
-
             #endregion JWT
 
 
             services.AddSignalR()
-                 //.AddJsonProtocol(options =>
-                 //{
-                 //    options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-                 //});
-                 .AddMessagePackProtocol();
+                 .AddMessagePackProtocol(options =>
+                 {
+                     options.FormatterResolvers = new List<MessagePack.IFormatterResolver>(){
+                         MessagePack.Resolvers.ContractlessStandardResolver.Instance,
+                         MessagePack.Resolvers.StandardResolver.Instance
+                     };
+                 });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -103,7 +122,10 @@ namespace GameService
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                   name: "default",
+                   pattern: "{controller=Home}/{action=Index}/{id?}"
+                   );
                 endpoints.MapHub<PokerHub>("/pokerHub");
             });
         }
