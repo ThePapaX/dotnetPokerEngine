@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameService", "GameService\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameServiceTests", "GameServiceTests\GameServiceTests.csproj", "{7A7E5205-FE3A-497F-9F3B-B69E98A761AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerEvaluatorClient", "PokerEvaluatorClient\PokerEvaluatorClient.csproj", "{6A755D5D-210B-45E5-B244-07EF2293630F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PokerEvaluatorClient", "PokerEvaluatorClient\PokerEvaluatorClient.csproj", "{6A755D5D-210B-45E5-B244-07EF2293630F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

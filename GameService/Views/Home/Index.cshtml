@@ -1,0 +1,70 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+    <head>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.0-preview.3.20215.14/signalr.min.js" integrity="sha256-f2UJn9FpsSKcsLjgun/k7/25iPH8fok2hYUOVXv0RgE=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/msgpack5/4.2.0/msgpack5.min.js" integrity="sha256-HRr2VCMf1Zv4dbSr3W6pXWg4BPKaTfayRhj0G+aajQk=" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/@@aspnet/signalr-protocol-msgpack@1.1.0/dist/browser/signalr-protocol-msgpack.min.js"></script>
+
+    </head>
+<body>
+    <h1>Index</h1>
+    <p>Whats up</p>
+    <script>
+        if (!localStorage.getItem('token')) {
+            async function postData(url = '', data = {}) {
+                // Default options are marked with *
+                const response = await fetch(url, {
+                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    mode: 'cors', // no-cors, *cors, same-origin
+                    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                    credentials: 'same-origin', // include, *same-origin, omit
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    redirect: 'follow', // manual, *follow, error
+                    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                    body: JSON.stringify(data) // body data type must match "Content-Type" header
+                });
+                return response.json(); // parses JSON response into native JavaScript objects
+            }
+
+            postData('/auth/authenticate', { email: 'arloznav.sis@gmail.com', password: '123' })
+                .then((data) => {
+                    console.log(data);
+                    localStorage.setItem('token', data.access_token); // JSON data parsed by `response.json()` call
+                    startWebsocketConnection();
+                });
+        }
+        else {
+            startWebsocketConnection();
+        }
+
+        function startWebsocketConnection() {
+
+            const pokerHubConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/pokerHub", { accessTokenFactory: () => localStorage.getItem('token') })
+                .configureLogging(signalR.LogLevel.Debug)
+                //.withHubProtocol(new signalR.protocols.msgpack.MessagePackHubProtocol())
+                .build();
+
+            pokerHubConnection.start();
+
+            pokerHubConnection.on('GameEvent', function (params) {
+                console.log('GameEvent', params);
+            });
+
+            pokerHubConnection.on('ReceiveMessage', function (params) {
+                console.log('ReceiveMessage', params)
+            });
+
+            window.pokerHubConnection = pokerHubConnection;
+        }
+
+    </script>
+</body>
+
+
+

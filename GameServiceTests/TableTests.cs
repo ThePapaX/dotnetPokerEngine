@@ -100,6 +100,16 @@ namespace GameServiceTests
         }
 
         [Test]
+        public void CanReturnActivePlayerCount()
+        {
+            // Arrange 
+            var table = GetTableWithPlayers();
+
+            // Assert
+            Assert.AreEqual(table.Players.Count, table.ActivePlayersCount());
+        }
+
+        [Test]
         public void DealerButtonIsSetToTheFirstPlayerOnTheTableByDefault()
         {
             // Arrange 

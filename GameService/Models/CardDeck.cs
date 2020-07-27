@@ -23,6 +23,7 @@ namespace GameService
         }
 
         public int Count => Cards.Count;
+        public int DealtCardsCount => DealtCards.Count;
 
         public Card GetNextCard()
         {
@@ -42,6 +43,7 @@ namespace GameService
 
             return nextCards;
         }
+        
 
         private static Card[] GenerateCardDeck()
         {
@@ -49,6 +51,8 @@ namespace GameService
 
             foreach (CardRank rank in Enum.GetValues(typeof(CardRank)))
             {
+                if (rank == CardRank.None) continue;
+
                 var index = (int)rank - 1;
                 cardStack[index] = new Card(rank, CardSuit.Heart);
                 cardStack[index + 13] = new Card(rank, CardSuit.Spade);

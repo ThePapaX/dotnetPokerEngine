@@ -1,6 +1,7 @@
 ﻿using GameService.Hubs;
 using MessagePack;
 using Microsoft.AspNetCore.SignalR;
+using PokerEvaluatorClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,29 +15,33 @@ namespace GameService.Models
     public class Game : IGame, IPokerHubServer
     {
         private readonly IHubContext<PokerHub> _hubContext;
+        private readonly IPokerEvaluator _pokerEvaluator;
 
         public Table Table { get; private set; }
 
         public LinkedListNode<GamePlayer> CurrentActionOn { get; private set; }
         public GamePlayer LastAgressor { get; private set; }
-       
+
         public double CurrentPotSize { get; private set; }
-        public List<Card> BoardCards { get; set; }
+        public List<Card> BoardCards { get; private set; }
+
         private CardDeck CardDeck { get; set; }
 
         private readonly HandStageHelper HandState;
 
         private CancellationTokenSource PlayerTimerCancellationTokenSource;
 
-        public Game(IHubContext<PokerHub> hubContext, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
+        public Game(IHubContext<PokerHub> hubContext, IPokerEvaluator pokerEvaluator, TableConfiguration tableConfig) //TODO: add Dependency Injection for handLogger here, redis, and other services
         {
-            Table = new Table(tableConfig);
             _hubContext = hubContext;
+            _pokerEvaluator = pokerEvaluator;
+
+            Table = new Table(tableConfig);
             BoardCards = new List<Card>(5);
             HandState = new HandStageHelper();
         }
         private void AddBetToPot(double bet) => CurrentPotSize += bet;
-        public Game(IHubContext<PokerHub> hubContext) : this(hubContext, new TableConfiguration()) { }
+        public Game(IHubContext<PokerHub> hubContext, IPokerEvaluator pokerEvaluator) : this(hubContext, pokerEvaluator, new TableConfiguration()) { }
 
         #region PlayerActions
 
@@ -122,6 +127,8 @@ namespace GameService.Models
         public async Task AddPlayer(GamePlayer player)
         {
             Table.AddPlayer(player);
+            
+            //TODO: When adding the player we must communicate with the Chips service, and perform the respective operations.
 
             var gameEvent = new GameEvent()
             {
@@ -320,10 +327,11 @@ namespace GameService.Models
 
         public async Task DispatchPlayerCard(GameEvent gameEventData)
         {
-            await _hubContext.Clients.User(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+            IClientProxy user = _hubContext.Clients.User(gameEventData.Data.PlayerId);
+            await user.SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
 
-            gameEventData.Data.Card = new Card();
-            await _hubContext.Clients.AllExcept(gameEventData.Data.PlayerId).SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
+            //IClientProxy users = _hubContext.Clients.AllExcept((string)gameEventData.Data.PlayerId);
+            //await users.SendAsync(ClientInvokableMethods.GameEvent, gameEventData);
         }
 
         public async Task DispatchPlayerAction(PlayerEvent playerAction)
@@ -341,9 +349,9 @@ namespace GameService.Models
 
                     while (!(cardsDealtPerPlayer == 2))
                     {
-                        if (currentPlayer == Table.Dealer) cardsDealtPerPlayer++;
                         
                         var playerCard = CardDeck.GetNextCard();
+                        currentPlayer.Value.PocketCards[cardsDealtPerPlayer] = playerCard;
 
                         var dealCardEvent = new GameEvent()
                         {
@@ -356,7 +364,9 @@ namespace GameService.Models
 
                         await DispatchPlayerCard(dealCardEvent);
 
+                        if (currentPlayer == Table.Dealer) cardsDealtPerPlayer++;
                         currentPlayer = Table.GetNextActivePlayerNode(currentPlayer);
+       
                     }
 
                     break;

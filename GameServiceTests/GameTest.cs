@@ -3,6 +3,8 @@ using GameService.Models;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 using NUnit.Framework;
+using PokerEvaluator;
+using PokerEvaluatorClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,13 +20,25 @@ namespace GameServiceTests
             Mock<IClientProxy> mockClientProxy = new Mock<IClientProxy>();
 
             mockClients.Setup(clients => clients.All).Returns(mockClientProxy.Object);
+            mockClients.Setup(clients => clients.User(It.IsAny<string>())).Returns(mockClientProxy.Object);
+            mockClients.Setup(clients => clients.AllExcept(It.IsAny<IReadOnlyList<string>>())).Returns(mockClientProxy.Object);
+
             mockHubContext.Setup(context => context.Clients).Returns(mockClients.Object);
 
             return (mockHubContext, mockClientProxy);
         }
+        private static Mock<IPokerEvaluator> GetMockPokerEvaluator()
+        {
+            var mock = new Mock<IPokerEvaluator>();
+            mock.Setup(mc => mc.EvaluateBoard(It.IsAny<string>())).Returns(new EvaluationResult());
+
+            return mock;
+        }
         private static (Game, Mock<IHubContext<PokerHub>>, Mock<IClientProxy>) GetMocks() {
             (var mockHubContext, var mockClientProxy) = GetMockPokerHubContext();
-            var mockGame = new Game(mockHubContext.Object);
+            var mockPokerEvaluator = GetMockPokerEvaluator();
+            var mockGame = new Game(mockHubContext.Object, mockPokerEvaluator.Object);
+            
 
             return (mockGame, mockHubContext, mockClientProxy);
         }
@@ -89,7 +103,9 @@ namespace GameServiceTests
 
             // Assert
 
-            mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && obj.Length == 1 && ((GameEvent)obj[0]).EventType == GameActionType.PlayerJoined), default), Times.Exactly(2));
+            mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(
+                ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && obj.Length == 1 && ((GameEvent)obj[0]).EventType == GameActionType.PlayerJoined), default), 
+                Times.Exactly(2));
         }
 
         [Test]
@@ -106,8 +122,56 @@ namespace GameServiceTests
 
             // Assert
             Assert.AreEqual(game.Table.Dealer.Value, player);
-            mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && obj.Length == 1 && ((GameEvent)obj[0]).EventType == GameActionType.UpdateDealerButton), default), Times.Once);
+
+            mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(
+                ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && obj.Length == 1 && ((GameEvent)obj[0]).EventType == GameActionType.UpdateDealerButton), default), 
+                Times.Once);
 
         }
+
+        [Test]
+        public async Task DealsPreflopCardsCorrectly()
+        {
+            // Arrange
+            (var game, var mockHubContext, var mockClientProxy) = GetMocks();
+            await game.AddPlayer(new GamePlayer() { Id = "player1"});
+            await game.AddPlayer(new GamePlayer() { Id = "player2" });
+            
+            await game.StartNewHand();
+            game.Table.MoveDealerButton();
+            game.Table.MoveBlindsPointers();
+
+            // Act
+            await game.Deal();
+
+            // Assert
+            mockClientProxy.Verify(clientProxy => clientProxy.SendCoreAsync(
+               ClientInvokableMethods.GameEvent, It.Is<object[]>(obj => obj != null && ((GameEvent)obj[0]).EventType == GameActionType.DealCard), default),
+               Times.Exactly(4));
+
+
+        }
+
+        //[Test]
+        //public async Task DealsflopCardsCorrectly()
+        //{
+        //    // Arrange
+        //    (var game, var mockHubContext, var mockClientProxy) = GetMocks();
+        //    await game.AddPlayer(new GamePlayer() { Id = "player1" });
+        //    await game.AddPlayer(new GamePlayer() { Id = "player2" });
+
+        //    await game.StartNewHand();
+        //    game.Table.MoveDealerButton();
+        //    game.Table.MoveBlindsPointers();
+
+        //    game.
+        //    // Act
+        //    await game.Deal();
+
+        //    // Assert
+        //    Assert.AreEqual(game.CardDeck.DealtCardsCount, 4);
+
+
+        //}
     }
 }

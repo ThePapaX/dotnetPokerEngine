@@ -1,10 +1,13 @@
 ﻿using GameService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace GameService.Hubs
 {
+    [Authorize]
     public class PokerHub : Hub, IPokerHubClient
     {
         private IGame _game;
@@ -14,24 +17,22 @@ namespace GameService.Hubs
             _game = gameState;
         }
 
-        public async Task SendMessage(string user, string message)
+        public async Task SendMessage(string message)
         {
-            await Clients.All.SendAsync("ReceiveMessage", Context.ConnectionId, message);
-            await Clients.All.SendAsync("GameState", _game);
+            await Clients.All.SendAsync("ReceiveMessage", Context.User.FindFirst(ClaimTypes.Email).Value, message);
         }
 
         public async Task ExecutePlayerAction(PlayerEvent playerAction)
         {
-            // Do the action
             await _game.ProcessClientAction(playerAction);
-
         }
 
         public override async Task OnConnectedAsync()
         {
+            var playerId = Context.User.FindFirst("Id").Value;
             var player = new GamePlayer()
             {
-                Id = Context.ConnectionId
+                Id = playerId
             };
 
             await _game.AddPlayer(player);

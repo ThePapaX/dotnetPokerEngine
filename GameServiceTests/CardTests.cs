@@ -15,7 +15,7 @@ namespace GameServiceTests
         public void DefaultCardValuesAreZeroValue()
         {
             var card = new Card();
-            Assert.AreEqual((CardRank)0, card.Rank);
+            Assert.AreEqual(CardRank.None, card.Rank);
             Assert.AreEqual(CardSuit.None, card.Suit);
         }
 

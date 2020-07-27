@@ -1,17 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
+using GameService.Context;
 using GameService.Hubs;
 using GameService.Models;
+using GameService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using PokerEvaluatorClient;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace GameService
 {
@@ -27,18 +29,76 @@ namespace GameService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            //services.AddControllers();
+            services.AddControllersWithViews();
             services.AddSingleton<IGame, Game>();
+            services.AddSingleton<IPokerEvaluator, EvaluatorGrpcClient>();
+            services.AddScoped<IIdentityService, IdentityService>();
+
+            services.AddDbContext<GameDbContext>(options =>
+            {
+                options.UseMySQL(
+                    Configuration.GetConnectionString("MySqlConnection") /*,b => b.MigrationsAssembly("NetCorePoker")*/
+                    );
+            });
+
+            #region JWT 
+
+            var key = Encoding.UTF8.GetBytes(Configuration.GetSection("CryptographicKey").Value);
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.Events = new JwtBearerEvents()
+                {
+                    OnTokenValidated = async ctx =>
+                    {
+                        var principal = ctx.Principal;
+                    },
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/pokerHub")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+                options.RequireHttpsMetadata = true; //TODO: load from config.
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidIssuer = "NetCorePoker"
+                };
+            });
+
+            #endregion JWT
+
 
             services.AddSignalR()
-                 //.AddJsonProtocol(options =>
-                 //{
-                 //    options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-                 //});
-                 .AddMessagePackProtocol();
+                 .AddMessagePackProtocol(options =>
+                 {
+                     options.FormatterResolvers = new List<MessagePack.IFormatterResolver>(){
+                         MessagePack.Resolvers.ContractlessStandardResolver.Instance,
+                         MessagePack.Resolvers.StandardResolver.Instance
+                     };
+                 });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -57,11 +117,15 @@ namespace GameService
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                   name: "default",
+                   pattern: "{controller=Home}/{action=Index}/{id?}"
+                   );
                 endpoints.MapHub<PokerHub>("/pokerHub");
             });
         }

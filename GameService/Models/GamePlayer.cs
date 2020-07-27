@@ -11,6 +11,9 @@ namespace GameService.Models
         public bool Absent { get; set; }
         public double CurrentBetSize { get; private set; }
         public double CurrentStack { get; private set; }
+
+        internal Card[] PocketCards { get; set; }
+
         public GamePlayer()
         {
             SeatNumber = -1;
@@ -18,6 +21,7 @@ namespace GameService.Models
             Absent = false;
             CurrentBetSize = 0;
             CurrentStack = 0;
+            PocketCards = new Card[2];
         }
 
         internal void SetCurrentStack(double amount)
